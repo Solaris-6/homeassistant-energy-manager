@@ -2,6 +2,7 @@
   "domain": "energy_manager",
   "name": "Energy Manager",
   "documentation": "https://github.com/solaris-6/homeassistant-energy-manager",
+  "version": "0.1.0",
   "requirements": [],
   "dependencies": [],
   "codeowners": ["@solaris-6"],
