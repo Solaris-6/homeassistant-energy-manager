@@ -6,7 +6,10 @@ from typing import Any, Dict, List, Optional
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
-from homeassistant.helpers import selector
+from homeassistant.helpers.selector import (
+    NumberSelector,
+    NumberSelectorConfig,
+)
 
 from .const import (
     DOMAIN,
@@ -18,123 +21,6 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
-
-
-class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Energy Manager."""
-
-    VERSION = 1
-
-    async def async_step_user(
-        self, user_input: Optional[Dict[str, Any]] = None
-    ) -> FlowResult:
-        """Handle the initial step to collect basic settings."""
-        if user_input is not None:
-            # Validate threshold
-            if (
-                "threshold_kW" in user_input
-                and "isosterisis_s" in user_input
-                and MIN_POWER_KW <= float(user_input["threshold_kW"]) <= MAX_POWER_KW
-                and float(user_input.get("isosterisis_s", DEFAULT_ISOSTERISIS_S)) > 0
-            ):
-                # Move to device configuration step
-                return await self.async_step_devices()
-
-            if user_input:
-                self.errors["base"] = "invalid_threshold"
-
-        defaults = {
-            "threshold_kW": DEFAULT_THRESHOLD_KW,
-            "isosterisis_s": DEFAULT_ISOSTERISIS_S,
-        }
-
-        return self.async_show_form(
-            step_id="user",
-            data_schema=self.build_user_schema(defaults),
-            errors={},
-        )
-
-    async def async_step_devices(
-        self, user_input: Optional[Dict[str, Any]] = None
-    ) -> FlowResult:
-        """Handle device configuration step."""
-        if not user_input:
-            return await self.async_step_devices_confirm()
-
-        # Collect and validate devices
-        general_breaker = user_input.get("general_breaker", "switch.quadro_elettrico_primo_piano_sy2_misure_interruttore")
-        devices = user_input.get("devices", [])
-
-        if not isinstance(devices, list) or len(devices) == 0:
-            self.errors["base"] = "invalid_devices"
-            defaults = {
-                "general_breaker": general_breaker,
-                "devices": default_device_list(),
-            }
-            return self.async_show_form(
-                step_id="devices",
-                data_schema=self.build_devices_schema(defaults),
-                errors={},
-            )
-
-        # Create entry with all collected data
-        config_data = {
-            "threshold_kW": float(user_input["threshold_kW"]),
-            "isosterisis_s": int(float(user_input.get("isosterisis_s", DEFAULT_ISOSTERISIS_S))),
-            "general_breaker": general_breaker,
-            "devices": devices,
-        }
-
-        return self.async_create_entry(title=NAME, data=config_data)
-
-    async def async_step_devices_confirm(
-        self, user_input: Optional[Dict[str, Any]] = None
-    ) -> FlowResult:
-        """Show device configuration form."""
-        defaults = {
-            "general_breaker": "switch.quadro_elettrico_primo_piano_sy2_misure_interruttore",
-            "devices": default_device_list(),
-        }
-
-        return self.async_show_form(
-            step_id="devices_confirm",
-            data_schema=self.build_devices_schema(defaults),
-            errors={},
-        )
-
-    @staticmethod
-    def build_user_schema(defaults: Dict[str, Any]) -> selector.SelectorSchema:
-        """Build user configuration schema."""
-        return selector.SelectorSchema({
-            "threshold_kW": selector.NumberSelector(
-                selector.NumberSelectorConfig(
-                    min=MIN_POWER_KW,
-                    max=MAX_POWER_KW,
-                    step=0.1,
-                    unit_of_measurement="kW",
-                    suggested_value=float(defaults.get("threshold_kW", DEFAULT_THRESHOLD_KW)),
-                )
-            ),
-            "isosterisis_s": selector.NumberSelector(
-                selector.NumberSelectorConfig(
-                    min=5,
-                    max=300,
-                    step=5,
-                    unit_of_measurement="seconds",
-                    suggested_value=float(defaults.get("isosterisis_s", DEFAULT_ISOSTERISIS_S)),
-                )
-            ),
-        })
-
-    @staticmethod
-    def build_devices_schema(defaults: Dict[str, Any]) -> selector.SelectorSchema:
-        """Build devices configuration schema."""
-        return selector.SelectorSchema({
-            "general_breaker": selector.TextSelector(
-                selector.TextSelectorConfig(placeholder="Interruttore generale")
-            ),
-            "devices": selector.ObjectSelector(),
-        })
 
 
 def default_device_list() -> List[Dict[str, Any]]:
@@ -186,3 +72,90 @@ def default_device_list() -> List[Dict[str, Any]]:
             "power_limit": 2.0,
         },
     ]
+
+
+class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+    """Handle a config flow for Energy Manager."""
+
+    VERSION = 1
+
+    async def async_step_user(self, user_input: Optional[Dict[str, Any]] = None) -> FlowResult:
+        """Handle the initial step to collect basic settings."""
+        if not user_input:
+            defaults = {
+                "threshold_kW": DEFAULT_THRESHOLD_KW,
+                "isosterisis_s": DEFAULT_ISOSTERISIS_S,
+            }
+            return self.async_show_form(
+                step_id="user",
+                data_schema=vol.Schema({
+                    vol.Required("threshold_kW", default=DEFAULT_THRESHOLD_KW): vol.Range(min=MIN_POWER_KW, max=MAX_POWER_KW),
+                    vol.Required("isosterisis_s", default=DEFAULT_ISOSTERISIS_S): vol.Range(min=5, max=300),
+                }),
+                errors={},
+            )
+
+        # Validate threshold
+        threshold = float(user_input.get("threshold_kW", 0))
+        isosterisis = int(float(user_input.get("isosterisis_s", 0)))
+
+        if MIN_POWER_KW <= threshold <= MAX_POWER_KW and isosterisis > 0:
+            return await self.async_step_devices()
+        else:
+            self.errors["base"] = "invalid_threshold"
+            defaults = {
+                "threshold_kW": DEFAULT_THRESHOLD_KW,
+                "isosterisis_s": DEFAULT_ISOSTERISIS_S,
+            }
+            return self.async_show_form(
+                step_id="user",
+                data_schema=vol.Schema({
+                    vol.Required("threshold_kW", default=DEFAULT_THRESHOLD_KW): vol.Range(min=MIN_POWER_KW, max=MAX_POWER_KW),
+                    vol.Required("isosterisis_s", default=DEFAULT_ISOSTERISIS_S): vol.Range(min=5, max=300),
+                }),
+                errors={},
+            )
+
+    async def async_step_devices(self, user_input: Optional[Dict[str, Any]] = None) -> FlowResult:
+        """Handle device configuration step."""
+        if not user_input:
+            defaults = {
+                "general_breaker": "switch.quadro_elettrico_primo_piano_sy2_misure_interruttore",
+                "devices": default_device_list(),
+            }
+            return self.async_show_form(
+                step_id="devices",
+                data_schema=vol.Schema({
+                    vol.Required("general_breaker"): str,
+                    vol.Required("devices", default=default_device_list()): selector.ObjectSelector(),
+                }),
+                errors={},
+            )
+
+        general_breaker = user_input.get("general_breaker", "switch.quadro_elettrico_primo_piano_sy2_misure_interruttore")
+        devices = user_input.get("devices", [])
+
+        if not isinstance(devices, list) or len(devices) == 0:
+            self.errors["base"] = "invalid_devices"
+            return self.async_show_form(
+                step_id="devices",
+                data_schema=vol.Schema({
+                    vol.Required("general_breaker"): str,
+                    vol.Required("devices", default=default_device_list()): selector.ObjectSelector(),
+                }),
+                errors={},
+            )
+
+        # Create entry with all collected data
+        config_data = {
+            "threshold_kW": float(user_input["threshold_kW"]),
+            "isosterisis_s": int(float(user_input.get("isosterisis_s", DEFAULT_ISOSTERISIS_S))),
+            "general_breaker": general_breaker,
+            "devices": devices,
+        }
+
+        return self.async_create_entry(title=NAME, data=config_data)
+
+
+import voluptuous as vol
+import selector
