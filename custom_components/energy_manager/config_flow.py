@@ -1,15 +1,11 @@
 """Config flow for Energy Manager."""
 
 import logging
-from typing import Any, Dict, List, Optional
+import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
-from homeassistant.helpers.selector import (
-    NumberSelector,
-    NumberSelectorConfig,
-)
 
 from .const import (
     DOMAIN,
@@ -23,7 +19,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-def default_device_list() -> List[Dict[str, Any]]:
+def default_device_list():
     """Return the list of default devices with typical configuration."""
     return [
         {
@@ -79,13 +75,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
-    async def async_step_user(self, user_input: Optional[Dict[str, Any]] = None) -> FlowResult:
+    async def async_step_user(self, user_input=None):
         """Handle the initial step to collect basic settings."""
         if not user_input:
-            defaults = {
-                "threshold_kW": DEFAULT_THRESHOLD_KW,
-                "isosterisis_s": DEFAULT_ISOSTERISIS_S,
-            }
             return self.async_show_form(
                 step_id="user",
                 data_schema=vol.Schema({
@@ -116,46 +108,25 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors={},
             )
 
-    async def async_step_devices(self, user_input: Optional[Dict[str, Any]] = None) -> FlowResult:
+    async def async_step_devices(self, user_input=None):
         """Handle device configuration step."""
         if not user_input:
-            defaults = {
-                "general_breaker": "switch.quadro_elettrico_primo_piano_sy2_misure_interruttore",
-                "devices": default_device_list(),
-            }
             return self.async_show_form(
                 step_id="devices",
                 data_schema=vol.Schema({
                     vol.Required("general_breaker"): str,
-                    vol.Required("devices", default=default_device_list()): selector.ObjectSelector(),
                 }),
                 errors={},
             )
 
         general_breaker = user_input.get("general_breaker", "switch.quadro_elettrico_primo_piano_sy2_misure_interruttore")
-        devices = user_input.get("devices", [])
 
-        if not isinstance(devices, list) or len(devices) == 0:
-            self.errors["base"] = "invalid_devices"
-            return self.async_show_form(
-                step_id="devices",
-                data_schema=vol.Schema({
-                    vol.Required("general_breaker"): str,
-                    vol.Required("devices", default=default_device_list()): selector.ObjectSelector(),
-                }),
-                errors={},
-            )
-
-        # Create entry with all collected data
+        # Create entry with all collected data (devices configured later via UI)
         config_data = {
             "threshold_kW": float(user_input["threshold_kW"]),
             "isosterisis_s": int(float(user_input.get("isosterisis_s", DEFAULT_ISOSTERISIS_S))),
             "general_breaker": general_breaker,
-            "devices": devices,
+            "devices": [],  # Will be populated via UI
         }
 
         return self.async_create_entry(title=NAME, data=config_data)
-
-
-import voluptuous as vol
-import selector
