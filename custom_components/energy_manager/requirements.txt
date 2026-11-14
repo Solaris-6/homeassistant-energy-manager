@@ -1,0 +1,8 @@
+# Energy Manager - Home Assistant Custom Integration
+# No external Python dependencies required.
+# This integration uses only Home Assistant core libraries.
+
+# Home Assistant is not listed here as it's provided by the HA core system.
+# If you add external dependencies in the future, list them here:
+# requests>=2.28.0
+# paho-mqtt>=1.6.0

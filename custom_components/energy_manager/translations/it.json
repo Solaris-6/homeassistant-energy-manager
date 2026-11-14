@@ -1,0 +1,53 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configurazione Energy Manager",
+        "data": {
+          "threshold_kW": "Soglia potenza (kW)",
+          "isosterisis_s": "Tempo di isteresi (secondi)"
+        }
+      },
+      "devices": {
+        "title": "Configurazione Dispositivi",
+        "data": {
+          "general_breaker": "Interruttore Generale (non sganciabile)",
+          "devices": "Elenco dispositivi con priorità"
+        }
+      }
+    },
+    "error": {
+      "invalid_threshold": "Soglia potenza non valida (deve essere tra 0.0 e 3.0 kW)"
+    },
+    "abort": {
+      "already_configured": "Energy Manager è già configurato"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "energy_manager_power": {
+        "name": "Energy Manager - Potenza",
+        "state": {
+          "ok": "Normale",
+          "warning": "Attenzione",
+          "critical": "Critico",
+          "error": "Errore"
+        }
+      }
+    }
+  },
+  "services": {
+    "shed_load": {
+      "name": "Spegni Carichi Non Critici",
+      "description": "Spegne i dispositivi a bassa priorità per ridurre il consumo"
+    },
+    "set_mode": {
+      "name": "Imposta Modalità",
+      "description": "Cambia modalità operativa (normale, vacanza, notte, solare, emergenza)"
+    },
+    "restore_all": {
+      "name": "Ripristina Tutti i Dispositivi",
+      "description": "Riaccende tutti i dispositivi quando la potenza è sicura"
+    }
+  }
+}

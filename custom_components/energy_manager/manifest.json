@@ -1,0 +1,11 @@
+{
+  "domain": "energy_manager",
+  "name": "Energy Manager",
+  "documentation": "https://github.com/solaris-6/homeassistant-energy-manager",
+  "requirements": [],
+  "dependencies": [],
+  "codeowners": ["@solaris-6"],
+  "config_flow": true,
+  "iot_class": "local_polling",
+  "integration_type": "system"
+}

@@ -1,0 +1,53 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Energy Manager Configuration",
+        "data": {
+          "threshold_kW": "Power Threshold (kW)",
+          "isosterisis_s": "Hysteresis Time (seconds)"
+        }
+      },
+      "devices": {
+        "title": "Devices Configuration",
+        "data": {
+          "general_breaker": "General Breaker (non-sheddable)",
+          "devices": "Devices list with priorities"
+        }
+      }
+    },
+    "error": {
+      "invalid_threshold": "Invalid power threshold (must be between 0.0 and 3.0 kW)"
+    },
+    "abort": {
+      "already_configured": "Energy Manager is already configured"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "energy_manager_power": {
+        "name": "Energy Manager - Power",
+        "state": {
+          "ok": "Normal",
+          "warning": "Warning",
+          "critical": "Critical",
+          "error": "Error"
+        }
+      }
+    }
+  },
+  "services": {
+    "shed_load": {
+      "name": "Shed Non-Critical Loads",
+      "description": "Turn off low priority devices to reduce power consumption"
+    },
+    "set_mode": {
+      "name": "Set Mode",
+      "description": "Change operation mode (normal, vacation, night, solar, emergency)"
+    },
+    "restore_all": {
+      "name": "Restore All Devices",
+      "description": "Turn on all devices when power is safe"
+    }
+  }
+}

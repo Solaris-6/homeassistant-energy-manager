@@ -1,0 +1,19 @@
+type: custom:energy-manager-energy-log-dashboard
+title: Energy Manager - Log Eventi
+icon: mdi:clipboard-text
+url_path: /energy_log
+
+cards:
+  - type: custom:energy-manager-event-history-chart
+    title: Storico Attività Dispositivi (48h)
+    hours: 48
+    entities:
+      - switch.quadro_elettrico_primo_piano_sy2_condizionatore_interruttore
+      - switch.quadro_elettrico_primo_piano_sy2_scaldabagno_interruttore
+      - switch.quadro_elettrico_primo_piano_sy2_lavastoviglie_interruttore
+      - switch.quadro_elettrico_primo_piano_sy2_lavatrice_interruttore
+
+  - type: custom:energy-manager-event-log
+    title: Ultimi Eventi
+    coordinator: energy_manager.coordinator
+    max_events: 50

@@ -1,0 +1,51 @@
+type: custom:energy-manager-dashboard
+title: Energy Manager
+icon: mdi:lightning-bolt
+url_path: /energy_manager
+
+cards:
+  - type: entities
+    title: Sistema Energetico
+    entities:
+      - entity: sensor.energy_manager_power
+        name: Potenza Attuale (kW)
+        icon: mdi:flash
+      - entity: switch.quadro_elettrico_primo_piano_sy2_misure_interruttore
+        name: Interruttore Generale
+        icon: mdi:lightning-bolt-circle-outline
+
+  - type: custom:energy-manager-gauge-card
+    title: Potenza Istantanea
+    sensor: sensor.energy_manager_power
+    max_value: 3.0
+    min_value: 0.0
+    threshold_1: 2.5
+    threshold_2: 3.0
+
+  - type: custom:energy-manager-devices-card
+    title: Dispositivi Gestiti
+    coordinator: energy_manager.coordinator
+
+  - type: custom:energy-manager-history-chart
+    title: Storico Consumo 24h
+    sensor: sensor.energy_manager_power
+    hours: 24
+
+  - type: custom:energy-manager-actions-card
+    title: Azioni Rapide
+    actions:
+      - name: Shedding Manuale
+        icon: mdi:power-plug-off
+        service: energy_manager.shed_load
+        data: {}
+      - name: Modalità Emergenza
+        icon: mdi:alert-circle
+        service: energy_manager.set_mode
+        data:
+          mode: emergenza
+
+  - type: custom:energy-manager-info-card
+    title: Informazioni
+    info:
+      rules: "Soglia: 2.8 kW | Max: 3.0 kW | Isteresi: 30s"
+      priorities_table: true

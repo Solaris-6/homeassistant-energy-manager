@@ -1,0 +1,27 @@
+services:
+  - domain: energy_manager
+    name: shed_load
+    description: 'Shed non-critical loads to reduce power consumption'
+    fields:
+      devices:
+        description: 'List of device IDs to shed'
+        example: ['switch.1', 'switch.2']
+      power_limit:
+        description: 'New power limit in kW'
+        example: 2.5
+
+  - domain: energy_manager
+    name: set_mode
+    description: 'Set special operation mode (normal, vacation, night, solar, emergenza)'
+    fields:
+      mode:
+        description: 'Operation mode'
+        example: 'vacation'
+        required: true
+      threshold_kW:
+        description: 'Temporary power threshold in kW'
+        example: 2.0
+
+  - domain: energy_manager
+    name: restore_all
+    description: 'Restore all shed devices when power is safe'
