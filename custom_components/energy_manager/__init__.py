@@ -5,7 +5,6 @@ from typing import Any, Dict, Optional
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import async_register_platforms
 
 from .const import DOMAIN, NAME
 from .coordinator import EnergyManagerCoordinator
@@ -25,22 +24,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if not coordinator:
         coordinator = EnergyManagerCoordinator(hass, entry)
         hass.data[DOMAIN]["coordinator"] = coordinator
-
-    # Register the sensor platform
-    await async_register_platforms(
-        hass,
-        [
-            {
-                "type": "sensor",
-                "domain": DOMAIN,
-                "name": NAME + " Power",
-                "unique_id": f"{DOMAIN}_power",
-                "unit_of_measurement": "kW",
-                "device_class": "power",
-                "state_class": "measurement",
-            }
-        ]
-    )
 
     return True
 

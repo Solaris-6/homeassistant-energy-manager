@@ -1,10 +1,11 @@
 """Coordinator for the Energy Manager integration."""
 
 import logging
+from typing import Any, Dict, List, Optional
+
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.entity import DeviceInfo
 
 from .const import (
     DOMAIN,
@@ -30,6 +31,7 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class EnergyManagerCoordinator(DataUpdateCoordinator):
     """Coordinate the energy management logic."""
 
@@ -38,21 +40,21 @@ class EnergyManagerCoordinator(DataUpdateCoordinator):
         self.hass = hass
         self.config_entry = entry
         self.threshold_kW = entry.data.get("threshold_kW", DEFAULT_THRESHOLD_KW)
-        self.isosterisis_s = entry.data.get("isosterisis_s", DEFAULT_ISOSTERISIS_S)
+        self.isosterisis_s = int(float(entry.data.get("isosterisis_s", DEFAULT_ISOSTERISIS_S)))
 
         # Device configuration (priority order)
-        self.devices = entry.data.get("devices", [])
+        self.devices: List[Dict[str, Any]] = entry.data.get("devices", [])
 
         # Track current state
-        self._current_power_kw = 0.0
-        self._status = STATUS_OK
-        self._last_action = None
-        self._action_history = []
+        self._current_power_kw: float = 0.0
+        self._status: str = STATUS_OK
+        self._last_action: Optional[Dict] = None
+        self._action_history: List[Dict] = []
 
         # Initialize the general breaker (non-sheddable)
-        self.general_breaker = entry.data.get("general_breaker", "switch.quadro_elettrico_primo_piano_sy2_misure_interruttore")
+        self.general_breaker: str = entry.data.get("general_breaker", "switch.quadro_elettrico_primo_piano_sy2_misure_interruttore")
 
-        super().__init__(hass, logger=_LOGGER, name=DOMAIN, update_interval=1)
+        super().__init__(hass, logger=_LOGGER, name=DOMAIN, update_interval=1)  # type: ignore[call-arg]
 
     @property
     def power_kw(self) -> float:
@@ -73,7 +75,7 @@ class EnergyManagerCoordinator(DataUpdateCoordinator):
         """Update device states."""
         for device in self.devices:
             entity_id = device.get("entity_id")
-            if entity_id:
+            if entity_id and isinstance(entity_id, str):
                 state = self.hass.states.get(entity_id)
                 device["state"] = state.state if state else STATE_UNKNOWN
 
@@ -82,7 +84,7 @@ class EnergyManagerCoordinator(DataUpdateCoordinator):
         
         Returns a dict with the result of the operation.
         """
-        result = {
+        result: dict = {
             "action": "none",
             "devices_cut": [],
             "devices_restored": [],
@@ -108,6 +110,9 @@ class EnergyManagerCoordinator(DataUpdateCoordinator):
             priority = device.get("priority", 0)
             entity_id = device.get("entity_id")
             
+            if not entity_id or not isinstance(entity_id, str):
+                continue
+                
             # Never shed the general breaker
             if entity_id == self.general_breaker:
                 continue
@@ -117,17 +122,17 @@ class EnergyManagerCoordinator(DataUpdateCoordinator):
                 continue
             
             # Check if device is currently ON
-            if entity_id and self.hass.states.get(entity_id).state == STATE_ON:
-                self.hass.call_service("switch/turn_off", entity_id=entity_id)
-                result["devices_cut"].append(entity_id)
-                devices_shed_count += 1
-                _LOGGER.info("Shed device: %s (priority: %d)", entity_id, priority)
-                
-                # Check if we've shed enough - stop if we're below threshold after this
-                # (We can't know exact power reduction, so shed one at a time)
-                if devices_shed_count >= 1:
-                    # Re-check after each shed
-                    break
+            state = self.hass.states.get(entity_id)
+            if not state or state.state != STATE_ON:
+                continue
+
+            self.hass.call_service("switch/turn_off", entity_id=entity_id)
+            result["devices_cut"].append(entity_id)
+            devices_shed_count += 1
+            _LOGGER.info("Shed device: %s (priority: %d)", entity_id, priority)
+            
+            # Shed only one device at a time to avoid overshooting
+            break
 
         # Update status based on power level
         if self._current_power_kw > MAX_POWER_KW + 0.5:
@@ -146,7 +151,7 @@ class EnergyManagerCoordinator(DataUpdateCoordinator):
         result["status"] = self._status
         return result
 
-    async def async_update(self):
+    async def async_update(self) -> None:
         """Fetch new state data for the coordinator."""
         try:
             power_sensor = "sensor.quadro_elettrico_primo_piano_smart_meter_potenza_totale"
@@ -171,4 +176,3 @@ class EnergyManagerCoordinator(DataUpdateCoordinator):
 
         except Exception as err:
             raise UpdateFailed(f"Error updating energy manager: {err}")
-
