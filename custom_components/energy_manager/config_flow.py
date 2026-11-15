@@ -8,6 +8,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers.selector import TextSelector, TextSelectorConfig
 
 from .const import (
     DOMAIN,
@@ -19,6 +20,8 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+DEFAULT_GENERAL_BREAKER = "switch.quadro_elettrico_primo_piano_sy2_misure_interruttore"
 
 
 def default_device_list() -> List[Dict[str, Any]]:
@@ -116,12 +119,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_show_form(
                 step_id="devices",
                 data_schema=vol.Schema({
-                    vol.Required("general_breaker"): str,
+                    vol.Required("general_breaker", default=DEFAULT_GENERAL_BREAKER): str,
                 }),
                 errors={},
             )
 
-        general_breaker = user_input.get("general_breaker", "switch.quadro_elettrico_primo_piano_sy2_misure_interruttore")
+        general_breaker = user_input.get("general_breaker", DEFAULT_GENERAL_BREAKER)
 
         # Create entry with all collected data (devices configured later via UI)
         config_data: Dict[str, Any] = {
