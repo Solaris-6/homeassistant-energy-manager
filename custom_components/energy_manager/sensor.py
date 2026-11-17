@@ -1,8 +1,13 @@
 """Sensor for Energy Manager."""
 
+import logging
+from typing import Any
+
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
     DOMAIN,
@@ -12,6 +17,20 @@ from .const import (
     STATUS_CRITICAL,
     STATUS_ERROR,
 )
+
+_LOGGER = logging.getLogger(__name__)
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up Energy Manager sensor from config entry."""
+    coordinator = hass.data[DOMAIN]["coordinator"]
+    sensor = EnergyManagerSensor(coordinator)
+    async_add_entities([sensor])
+
 
 class EnergyManagerSensor(SensorEntity):
     """Sensor for Energy Manager."""
@@ -39,8 +58,6 @@ class EnergyManagerSensor(SensorEntity):
             "isosterisis_s": self.coordinator.isosterisis_s,
             "total_devices": len(self.coordinator.devices_config),
             "last_action": self.coordinator._last_action,
-            "mode": self.coordinator._mode,
-            "priority_min": self.coordinator._priority_min,
         }
         return attrs
 
@@ -55,6 +72,5 @@ class EnergyManagerSensor(SensorEntity):
         )
 
     def update(self):
-        """Update the sensor."""
-        self.coordinator.async_update()
-
+        """Update the sensor - not needed, coordinator handles updates."""
+        pass

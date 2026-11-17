@@ -12,6 +12,7 @@ class StatisticsManager:
         self.config = config
         self.daily_stats = {}
         self.monthly_stats = {}
+        self.interventions = []
     async def async_record_intervention(self, action: str, devices: list, power_kw: float):
         self.interventions.append({
             'timestamp': datetime.now().isoformat(),
@@ -50,6 +51,8 @@ class StatisticsManager:
             'total_interventions': len(monthly_interventions),
             'interventions': monthly_interventions,
             'energy_saved_kwh': sum(i.get('power_kw', 0) for i in monthly_interventions),
+        }
+
     def get_summary(self) -> dict:
         return {
             'total_interventions': len(self.interventions),

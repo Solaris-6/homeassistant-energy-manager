@@ -1,6 +1,7 @@
 """Coordinator for the Energy Manager integration."""
 
 import logging
+from datetime import timedelta
 from typing import Any, Dict, List, Optional
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -54,7 +55,7 @@ class EnergyManagerCoordinator(DataUpdateCoordinator):
         # Initialize the general breaker (non-sheddable)
         self.general_breaker: str = entry.data.get("general_breaker", "switch.quadro_elettrico_primo_piano_sy2_misure_interruttore")
 
-        super().__init__(hass, logger=_LOGGER, name=DOMAIN, update_interval=1)  # type: ignore[call-arg]
+        super().__init__(hass, logger=_LOGGER, name=DOMAIN, update_interval=timedelta(seconds=1))
 
     @property
     def power_kw(self) -> float:

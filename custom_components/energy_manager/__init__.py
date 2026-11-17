@@ -25,6 +25,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         coordinator = EnergyManagerCoordinator(hass, entry)
         hass.data[DOMAIN]["coordinator"] = coordinator
 
+    # Forward setup to sensor platform
+    await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
+
     return True
 
 
@@ -33,6 +36,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = hass.data[DOMAIN].get("coordinator")
     if coordinator:
         await coordinator.async_shutdown()
+
+    await hass.config_entries.async_forward_entry_unload(entry, "sensor")
 
     hass.data[DOMAIN]["unloaded"] = True
     return True
